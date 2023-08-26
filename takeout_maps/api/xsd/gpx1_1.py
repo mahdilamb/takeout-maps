@@ -321,16 +321,16 @@ class Document(pydantic.BaseModel):
         """Read a file as a document."""
         force_list = {
             ("gpx", "rte", "rtept"),
-            ("gpx", "trk", "trkseg"),
-            ("gpx", "wpt"),
-            ("gpx", "metadata", "link"),
-            ("gpx", "rte", "link"),
-            ("gpx", "rte", "rtept", "link"),
-            ("gpx", "trk"),
             ("gpx", "trk", "trkseg", "trkpt"),
-            ("gpx", "rte"),
+            ("gpx", "rte", "link"),
+            ("gpx", "metadata", "link"),
+            ("gpx", "rte", "rtept", "link"),
             ("gpx", "wpt", "link"),
+            ("gpx", "trk"),
+            ("gpx", "trk", "trkseg"),
             ("gpx", "trk", "link"),
+            ("gpx", "rte"),
+            ("gpx", "wpt"),
         }
         string: str
         if path.startswith("http"):

@@ -12,12 +12,17 @@ dependencies = [
   "fastapi",
   "uvicorn[standard]",
   "pydantic-stream@git+https://github.com/mahdilamb/pydantic-stream",
-    "fitbit-web@git+https://github.com/mahdilamb/fitbit-web"
+  "ijson",
+  "fitbit-web@git+https://github.com/mahdilamb/fitbit-web",
+  "sqlalchemy",
+  "tqdm",
 ]
 
 [project.optional-dependencies]
+all = ["takeout-maps[test,dev]"]
 dev = [
   "xsd-to-pydantic@git+https://github.com/mahdilamb/xsd-to-pydantic",
+  "pydantic-to-typescript@git+https://github.com/mahdilamb/pydantic-to-typescript@changes-for-new-pydantic",
 ]
 test = [
   "black",
@@ -28,9 +33,8 @@ test = [
   "pytest-cov",
   "docformatter",
   "pydocstyle",
-   "types-requests",
+  "types-requests",
 ]
-all = ["takeout-maps[test,dev]"]
 [tool.setuptools]
 packages = ["takeout_maps"]
 [tool.setuptools.dynamic]

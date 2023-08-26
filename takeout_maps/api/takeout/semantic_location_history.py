@@ -271,8 +271,8 @@ class ActivitySegment(pydantic.BaseModel):
     distance: int | None = None
     confidence: Confidence | None = None
     activities: Sequence[Activity] | None = None
-    activity_type: ActivityType | None = pydantic.Field(
-        alias="activityType", default=None
+    activity_type: ActivityType = pydantic.Field(
+        alias="activityType", default="UNKNOWN_ACTIVITY_TYPE"
     )
     waypoint_path: WaypointPath | None = pydantic.Field(
         alias="waypointPath", default=None
@@ -296,6 +296,7 @@ class ActivitySegment(pydantic.BaseModel):
 
 
 class TimelineObject(pydantic.BaseModel):
+    id: int | None = None
     place_visit: PlaceVisit | None = pydantic.Field(alias="placeVisit", default=None)
     activity_segment: ActivitySegment | None = pydantic.Field(
         alias="activitySegment", default=None

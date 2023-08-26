@@ -647,17 +647,17 @@ class Document(pydantic.BaseModel):
     def from_xml(path: str) -> "Document":
         """Read a file as a document."""
         force_list = {
-            ("TrainingCenterDatabase", "Activities", "MultiSportSession"),
-            ("TrainingCenterDatabase", "Courses", "Course", "CoursePoint"),
-            ("TrainingCenterDatabase", "Courses", "Course", "Track"),
-            ("TrainingCenterDatabase", "Workouts", "Workout"),
-            ("TrainingCenterDatabase", "Activities", "MultiSportSession", "NextSport"),
-            ("TrainingCenterDatabase", "Workouts", "Workout", "ScheduledOn"),
-            ("TrainingCenterDatabase", "Courses", "Course", "Lap"),
-            ("TrainingCenterDatabase", "Activities", "Activity"),
             ("TrainingCenterDatabase", "Workouts", "Workout", "Step"),
-            ("TrainingCenterDatabase", "Courses", "Course"),
+            ("TrainingCenterDatabase", "Activities", "MultiSportSession", "NextSport"),
+            ("TrainingCenterDatabase", "Courses", "Course", "Track"),
+            ("TrainingCenterDatabase", "Courses", "Course", "CoursePoint"),
             ("TrainingCenterDatabase", "Activities", "Activity", "Lap"),
+            ("TrainingCenterDatabase", "Workouts", "Workout", "ScheduledOn"),
+            ("TrainingCenterDatabase", "Workouts", "Workout"),
+            ("TrainingCenterDatabase", "Activities", "MultiSportSession"),
+            ("TrainingCenterDatabase", "Activities", "Activity"),
+            ("TrainingCenterDatabase", "Courses", "Course"),
+            ("TrainingCenterDatabase", "Courses", "Course", "Lap"),
         }
         string: str
         if path.startswith("http"):

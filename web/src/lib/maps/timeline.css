@@ -1,0 +1,4 @@
+.timeline.leaflet-control {
+	margin-right: 10px;
+	width: calc(100vw - 20px);
+}

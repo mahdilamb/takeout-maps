@@ -19,7 +19,10 @@ bandit: # Run security checks with bandit.
 docstrings: # Format the docstrings using docformatter
 	docformatter --in-place -r ${PYTHON_SRC_DIRECTORIES};  pydocstyle ${PYTHON_SRC_DIRECTORIES}
 
-format: isort black docstrings # Format the source files with isort and black.
+format-web:
+	npm --prefix web run format
+
+format: isort black docstrings format-web # Format the source files with isort and black.
 
 mypy: # Check types with mypy.
 	mypy ${PYTHON_SRC_DIRECTORIES}
@@ -30,7 +33,13 @@ pydantic-schema: # Generate the Pydantic schema from xsd files.
 	python3 scripts/generate_schema.py
 
 serve: 
-	python -m takeout_maps --takeout=${takeout}
+	python -m takeout_maps --takeout=${takeout} & npm --prefix web run dev -- --open --port=5173
+
+serve-q: 
+	python -m takeout_maps --takeout=${takeout} & npm --prefix web run dev -- --port=5173
+
+serve: takeout=${GOOGLE_TAKEOUT_DIRECTORY}
+serve-q: takeout=${GOOGLE_TAKEOUT_DIRECTORY}
 
 help: # Show help for each of the Makefile recipes.
 	@grep -E '^[a-zA-Z0-9 -]+:.*#'  Makefile | sort | while read -r l; do printf "\033[1;32m$$(echo $$l | cut -f 1 -d':')\033[00m\n\t$$(echo $$l | cut -f 2- -d'#')\n"; done

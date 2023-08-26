@@ -291,3 +291,19 @@ dist
 .pnp.*
 
 .vscode
+shared.json
+takeout.sqlite
+
+.DS_Store
+node_modules/
+/web/build
+/web/.svelte-kit
+/web/package
+.env
+.env.*
+!.env.example
+.vercel
+.output
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+!web/src/lib

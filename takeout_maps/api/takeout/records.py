@@ -1,10 +1,8 @@
 import datetime
-from typing import Literal, NamedTuple, Sequence, TypeAlias, TypeVar
+from typing import Literal, Sequence, TypeAlias
 
 import pydantic
 
-T = TypeVar("T")
-PydanticModel: TypeAlias = TypeVar("PydanticModel", bound=type[pydantic.BaseModel])
 ActivityType: TypeAlias = Literal[
     "EXITING_VEHICLE",
     "IN_VEHICLE",
@@ -26,7 +24,7 @@ ActivityType: TypeAlias = Literal[
 
 class AccessPoint(pydantic.BaseModel):
     frequency_Mhz: int = pydantic.Field(alias="frequencyMhz")
-    is_connected: bool = pydantic.Field(alias="isConnected")
+    is_connected: bool | None = pydantic.Field(alias="isConnected", default=None)
     mac: str
     strength: int
 
@@ -53,11 +51,12 @@ class ActivityRecord(pydantic.BaseModel):
 
 
 class LocationMetadata(pydantic.BaseModel):
-    timestamp: datetime.datetime
-    wifi_scan: WifiScan
+    timestamp: datetime.datetime | None = None
+    wifi_scan: WifiScan | None = None
 
 
 class Location(pydantic.BaseModel):
+    id: int | None = None
     latitude_e7: int = pydantic.Field(alias="latitudeE7")
     longitude_e7: int = pydantic.Field(alias="longitudeE7")
     os_level: int | None = pydantic.Field(alias="osLevel", default=None)
@@ -75,7 +74,7 @@ class Location(pydantic.BaseModel):
         alias="verticalAccuracy", default=None
     )
 
-    source: str
+    source: str | None = None
     accuracy: int
     active_wifi_scan: WifiScan | None = pydantic.Field(
         alias="activeWifiScan", default=None
@@ -88,23 +87,11 @@ class Location(pydantic.BaseModel):
     device_designation: Literal["PRIMARY", "UNKNOWN"] | str | None = pydantic.Field(
         alias="deviceDesignation", default=None
     )
-    device_tag: int = pydantic.Field(alias="deviceTag")
+    device_tag: int | None = pydantic.Field(alias="deviceTag", default=None)
     heading: int | None = None
     inferred_location: Sequence["Location"] | None = pydantic.Field(
         alias="inferredLocation", default=None
     )
-
-
-class FileCursor(NamedTuple):
-    file_path: str
-    path: tuple[None | str | int, ...]
-
-    def descend(self, path: str | int) -> "FileCursor":
-        cursor = FileCursor(
-            file_path=self.file_path,
-            path=self.path + (path,),
-        )
-        return cursor
 
 
 class Records(pydantic.BaseModel):

@@ -1,114 +1,83 @@
-import argparse
+import datetime
 import os
-import urllib.parse
 from typing import Annotated
 
-import pydantic
-from fastapi import Depends, FastAPI, Path
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fitbit_web import auth, client
-from pydantic_stream import resolve
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-from takeout_maps import exceptions, security
+import takeout_maps
+import takeout_maps.constants
+from takeout_maps import takeout as takeout_queries
 from takeout_maps.api import serving
-from takeout_maps.api.takeout import takeout
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--takeout")
-args = parser.parse_args()
-takeout_data = takeout.Takeout(args.takeout)
-
-fitbit_redirect_url = urllib.parse.urlparse(auth.REDIRECT_URL)
-host, port = fitbit_redirect_url.netloc.split(":")
-
+from takeout_maps.routes import fitbit, takeout
 
 app = FastAPI()
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(takeout_maps.constants.PACKAGE_ROOT, "static")),
+    name="static",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost",
+        f"http://localhost:{takeout_maps.constants.SHARED_WITH_FRONTEND['frontend']['port']}",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-fitbit_auth = security.FitbitAuth()
+app.include_router(fitbit.router)
+app.include_router(takeout.router)
 
 
-@app.get("/history.json", response_model=serving.Histories)
-def months():
-    return {"months": takeout_data.semantic_location_histories}
+@app.get(
+    "/connections",
+    response_model=list[serving.Connection],
+)
+def list_connections():
+    """Get a list of the available connections."""
+    return [
+        route.endpoint()
+        for route in app.router.routes
+        if route.path.endswith("/connection")
+    ]
 
 
-@app.get("/history/{year}/{month}.json", response_model=serving.History)
-def month(
-    year: Annotated[int, pydantic.constr(pattern=r"\d{4}")],
-    month: Annotated[int, pydantic.constr(pattern=r"\d{2}")],
-):
-    with takeout_data.semantic_location_history((year, month)) as history:
-        return {"data": resolve(history)}
-
-
-@app.get(str(fitbit_redirect_url.path), dependencies=[Depends(fitbit_auth)])
-def init_client():
-    return RedirectResponse("/")
-
-
-@app.exception_handler(exceptions.NoFitbitAuthorizationError)
-async def requires_fitbit(*_):
-    return HTMLResponse(
-        """<html>
-    <body>
-        <a href=\""""
-        + auth.get_authorization_url()
-        + """\"">Connect fitbit</a>
-
-    </body>
-</html>
-"""
+@app.get("/locations/{date}.json")
+async def locations(
+    date: Annotated[datetime.date, takeout.ValidRange],
+) -> serving.LocationData:
+    try:
+        takeout.ValidRange(date)
+    except ValueError as e:
+        raise HTTPException(
+            404,
+            detail=serving.ExceptionDetail(
+                errorMessage="The date is out of range.",
+                errorID="date-out-of-range",
+                start=str(takeout.all_range[0]),
+                end=str(takeout.all_range[1]),
+            ).model_dump(),
+        ) from e
+    return serving.LocationData(
+        locations=[
+            serving.Location(
+                latitude=location.latitude_e7 / 1e7,
+                longitude=location.longitude_e7 / 1e7,
+                timestamp=location.timestamp,
+                accuracy=location.accuracy,
+                altitude=location.accuracy,
+            )
+            for location in takeout_queries.records_by_date(date).locations
+        ],
+        start=takeout.all_range[0].date(),
+        end=takeout.all_range[1].date(),
     )
-
-
-@app.get("/")
-def today():
-    return RedirectResponse("/today")
-
-
-@app.get("/{date}")
-async def steps(
-    date: Annotated[str, Path(pattern=r"((\d{4}-\d{2}-\d{2})|today)")],
-    fitbit_client: Annotated[client.Client, Depends(fitbit_auth)],
-):
-    async with fitbit_client.async_client() as web_client:
-        data = await web_client.aget_activities_resource_by_date_intraday(
-            date, detail_level="1min"
-        )
-        return HTMLResponse(
-            """<head>
-	<script src='https://cdn.plot.ly/plotly-2.25.2.min.js'></script>
-</head>
-
-<body>
-	<div id='myDiv'><!-- Plotly chart will be drawn inside this DIV --></div>
-    <script type="text/javascript">
-    var trace1 = {
-  x: """
-            + str(
-                [
-                    value["time"]
-                    for value in data["activities-steps-intraday"]["dataset"]
-                ]
-            )
-            + """,
-  y: """
-            + str(
-                [
-                    value["value"]
-                    for value in data["activities-steps-intraday"]["dataset"]
-                ]
-            )
-            + """,
-  type: 'scatter'
-};
-
-Plotly.newPlot('myDiv', [trace1]);
-
-    </script>
-</body>"""
-        )
 
 
 if __name__ == "__main__":
@@ -122,6 +91,6 @@ if __name__ == "__main__":
     uvicorn.run(
         f"{module}:app",
         reload=True,
-        port=int(port),
-        host=host,
+        port=takeout_maps.constants.PORT,
+        host=takeout_maps.constants.HOST,
     )
