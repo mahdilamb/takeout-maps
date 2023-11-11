@@ -40,7 +40,7 @@
 	"type": "module",
 	"dependencies": {
 		"@popperjs/core": "^2.11.8",
-		"axios": "^1.4.0",
+		"axios": "^1.6.0",
 		"color-interpolate": "^1.0.5"
 	}
 }
